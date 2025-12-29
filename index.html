@@ -1114,20 +1114,32 @@
             }
         }
 
-        // --- CLOCK LOGIC ---
-        function startClock() {
-            function update() {
-                const el = document.getElementById('system-clock');
-                if (el) {
-                    const now = new Date();
-                    const h = String(now.getHours()).padStart(2, '0');
-                    const m = String(now.getMinutes()).padStart(2, '0');
-                    const s = String(now.getSeconds()).padStart(2, '0');
-                    el.textContent = `${h}:${m}:${s}`;
-                }
+        /* SYSTEM CLOCK MODULE */
+        function initSystemClock() {
+            function updateTime() {
+                // CRITICAL: Re-fetch element every tick because Header re-renders dynamically (SPA)
+                const clockElement = document.getElementById('system-clock');
+                const mobileClockElement = document.getElementById('system-clock-mobile');
+                
+                // If elements don't exist yet (e.g. loading), just skip this tick
+                if (!clockElement && !mobileClockElement) return;
+
+                const now = new Date();
+                // Format: HH:MM:SS (Pad with leading zeros)
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const timeString = `${hours}:${minutes}:${seconds}`;
+                
+                if (clockElement) clockElement.textContent = timeString;
+                if (mobileClockElement) mobileClockElement.textContent = timeString;
             }
-            setInterval(update, 1000);
-            update(); // run immediately
+
+            // 1. Update immediately
+            updateTime();
+            
+            // 2. Set interval to update every second
+            setInterval(updateTime, 1000);
         }
 
         // --- INIT ---
@@ -1135,7 +1147,7 @@
             loadData();
             initTheme();
             renderApp();
-            startClock();
+            initSystemClock(); // CRITICAL: Start the clock
         });
 
         // --- GLOBAL EVENT DELEGATION ---
