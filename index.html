@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <!-- PWA / App Identity -->
-    <title>Nexus Archive</title>
+    <title>Nexus Archive V2.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Nexus">
@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#000000">
     <meta name="mobile-web-app-capable" content="yes">
     
-    <!-- Icons (Placeholder) -->
+    <!-- Icons -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💠</text></svg>">
     
     <!-- Libraries -->
@@ -28,7 +28,7 @@
     <!-- Config & Styles -->
     <script>
       tailwind.config = {
-        darkMode: 'class', // We handle it manually via data-theme
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
@@ -40,7 +40,6 @@
                 red: '#E63338',
                 green: '#4ADE80'
               },
-              // Theming Engine Maps
               t: {
                 text: 'var(--text-main)',
                 muted: 'var(--text-secondary)',
@@ -86,15 +85,14 @@
     </script>
 
     <style>
-      /* CRITICAL TYPOGRAPHY OVERRIDE - HYBRID STACK FOR SCI-FI HANZI */
+      /* CRITICAL TYPOGRAPHY */
       * {
         font-family: 'Rajdhani', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif !important;
         box-sizing: border-box;
       }
 
-      /* THEMING ENGINE VARIABLES */
+      /* THEMING ENGINE */
       :root {
-        /* MACHINE (Light) - Defaults */
         --text-main: #2A2A2A;
         --text-secondary: #4B5563;
         --card-bg: rgba(255, 255, 255, 0.65);
@@ -103,16 +101,11 @@
         --border-color: #D1D5DB;
         --input-bg: rgba(255, 255, 255, 0.5);
         --scanline-color: rgba(0,0,0,0.03);
-        
-        /* Fixed Header Colors */
         --header-bg: rgba(240, 242, 245, 0.85);
-        
-        /* Dock Colors */
         --dock-bg: rgba(240, 242, 245, 0.95);
       }
 
       [data-theme="dark"] {
-        /* DEVIANT (Dark) */
         --text-main: #E0E0E0;
         --text-secondary: #9CA3AF;
         --card-bg: rgba(20, 25, 35, 0.6);
@@ -121,40 +114,22 @@
         --border-color: #333333;
         --input-bg: rgba(0, 0, 0, 0.3);
         --scanline-color: rgba(255,255,255,0.03);
-        
-        /* Fixed Header Colors Dark */
         --header-bg: rgba(15, 20, 30, 0.85);
-        
-        /* Dock Colors */
         --dock-bg: rgba(10, 15, 20, 0.9);
       }
       
-      /* FULL SCREEN BODY & ANIMATED BACKGROUND */
       body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        width: 100%;
+        margin: 0; padding: 0; min-height: 100vh; width: 100%;
         overflow-x: hidden;
         -webkit-tap-highlight-color: transparent;
-        letter-spacing: 0.08em;
-        font-weight: 400;
-        
-        /* FORCE BLACK BACKGROUND AS REQUESTED */
         background-color: #000000 !important;
         color: var(--text-main);
-        
-        /* Safe Area Support */
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
       }
 
-      /* Animated Gradient Background Overlay */
       .bg-anim-layer {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        z-index: -1;
-        /* Default Light Gradient */
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         background-size: 400% 400%;
         animation: gradientMove 15s ease infinite;
@@ -171,275 +146,136 @@
           100% { background-position: 0% 50%; }
       }
 
-      /* BOOT SCREEN OVERLAY */
-      #boot-screen {
+      /* INSTABILITY MONITOR */
+      #instability-monitor {
           position: fixed;
-          top: 0; left: 0; width: 100%; height: 100%;
-          background-color: #000000;
-          z-index: 99999; /* Top layer */
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          transition: opacity 0.8s ease-out; /* Smooth fade out */
+          top: calc(env(safe-area-inset-top) + 60px);
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 900;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.5s ease;
+      }
+      
+      .instability-text {
+          font-family: 'Orbitron', sans-serif;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          font-size: 0.75rem;
+          padding: 0.5rem 1rem;
+          background: rgba(0,0,0,0.8);
+          border: 1px solid currentColor;
+          box-shadow: 0 0 15px currentColor;
+          border-radius: 2px;
+          text-shadow: 0 0 5px currentColor;
+      }
+      
+      .instability-up { color: #2FB4E9; border-color: #2FB4E9; }
+      .instability-down { color: #E63338; border-color: #E63338; }
+
+      /* BOOT SCREEN */
+      #boot-screen {
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background-color: #000000; z-index: 99999;
+          display: flex; justify-content: center; align-items: center;
+          transition: opacity 0.8s ease-out;
       }
 
       .cyber-spinner {
-          width: 50px;
-          height: 50px;
+          width: 50px; height: 50px;
           border: 3px solid rgba(47, 180, 233, 0.1);
-          border-top: 3px solid #2fb4e9; /* CyberLife Blue */
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 20px auto; /* Center it */
+          border-top: 3px solid #2fb4e9; border-radius: 50%;
+          animation: spin 1s linear infinite; margin: 0 auto 20px auto;
       }
 
       .boot-log {
-          font-family: 'Rajdhani', sans-serif;
-          color: #2fb4e9;
-          font-size: 14px;
-          letter-spacing: 3px;
-          font-weight: 600;
-          text-align: center;
+          font-family: 'Rajdhani', sans-serif; color: #2fb4e9;
+          font-size: 14px; letter-spacing: 3px; font-weight: 600;
           text-transform: uppercase;
       }
       
-      @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-      /* SEARCH HIGHLIGHT (FORENSIC MODE) */
+      /* UTILS */
       .search-highlight {
-          background-color: #f0c420; /* Android Warning Yellow */
-          color: #000000 !important; /* Black text for max contrast */
-          font-weight: bold;
-          border-radius: 2px;
-          box-shadow: 0 0 8px rgba(240, 196, 32, 0.6); /* Glowing effect */
-          padding: 0 2px;
-      }
-
-      /* RESET CONTAINER STYLES FOR FULL SCREEN */
-      #app {
-          background: transparent !important;
-          box-shadow: none !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          margin: 0 !important;
+          background-color: #f0c420; color: #000000 !important;
+          font-weight: bold; border-radius: 2px;
+          box-shadow: 0 0 8px rgba(240, 196, 32, 0.6); padding: 0 2px;
       }
 
       .glass-panel {
         background: var(--card-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         border: 1px solid var(--border-color);
         transition: background-color 0.3s ease, border-color 0.3s ease;
       }
       
-      /* FIXED HEADER STYLES */
       #fixed-header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          z-index: 100;
-          background: var(--header-bg);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(47, 180, 233, 0.3);
-          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-          transition: background-color 0.3s ease;
+          position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+          background: var(--header-bg); backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(47, 180, 233, 0.3);
           padding-top: max(10px, env(safe-area-inset-top));
-          display: flex;
-          flex-direction: column;
       }
       
-      #system-clock {
-          font-family: 'Rajdhani', sans-serif;
-          font-weight: 600;
-          color: rgba(47, 180, 233, 0.9);
-          font-size: 16px;
-          font-variant-numeric: tabular-nums;
-          letter-spacing: 1px;
-          text-shadow: 0 0 5px rgba(47, 180, 233, 0.3);
-          margin-right: 12px;
-      }
-
-      /* BOTTOM DOCK STYLES */
       #bottom-dock {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 70px;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        background: var(--dock-bg);
-        border-top: 1px solid rgba(47, 180, 233, 0.3);
-        z-index: 200;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+        display: flex; justify-content: space-around; align-items: center;
+        backdrop-filter: blur(16px); background: var(--dock-bg);
+        border-top: 1px solid rgba(47, 180, 233, 0.3); z-index: 200;
         padding-bottom: max(10px, env(safe-area-inset-bottom));
       }
 
       .dock-btn {
-        flex: 1;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-secondary);
-        transition: all 0.3s ease;
-        border-bottom: 3px solid transparent;
-        font-family: 'Orbitron', sans-serif;
-        letter-spacing: 0.15em;
-        font-size: 0.65rem;
-        gap: 6px;
-        font-weight: 600;
-        opacity: 0.6;
+        flex: 1; height: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; color: var(--text-secondary);
+        font-family: 'Orbitron', sans-serif; letter-spacing: 0.15em; font-size: 0.65rem;
+        font-weight: 600; opacity: 0.6; gap: 6px;
       }
-      
       .dock-btn.active {
-        color: #2FB4E9;
-        border-bottom-color: #2FB4E9;
-        text-shadow: 0 0 10px rgba(47, 180, 233, 0.6);
-        background: linear-gradient(to top, rgba(47, 180, 233, 0.05), transparent);
+        color: #2FB4E9; background: linear-gradient(to top, rgba(47, 180, 233, 0.05), transparent);
         opacity: 1;
       }
 
-      /* PILL BUTTONS */
       .btn-pill {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        border: 1px solid;
-        border-radius: 9999px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        transition: all 0.3s ease;
-        background: transparent;
-        cursor: pointer;
+        display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem;
+        border: 1px solid; border-radius: 9999px; font-family: 'Orbitron', sans-serif;
+        font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
       }
       
-      .btn-action-search {
-        border-color: #2FB4E9;
-        color: #2FB4E9;
-      }
+      .btn-action-search { border-color: #2FB4E9; color: #2FB4E9; }
+      .btn-action-settings { border-color: var(--text-secondary); color: var(--text-secondary); }
 
-      .btn-action-settings {
-        border-color: var(--text-secondary);
-        color: var(--text-secondary);
-      }
-      
-      /* MODAL FULLSCREEN UTILITY */
-      .modal-fullscreen {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        border: none !important;
-        margin: 0 !important;
-        z-index: 60 !important; /* Above everything else */
-        padding-top: max(20px, env(safe-area-inset-top)) !important;
-        box-sizing: border-box;
-      }
-
-      /* IMAGE STYLES */
-      /* List View */
+      /* IMAGES */
       .card-image-container {
-          width: 100%;
-          max-height: 250px; /* User Req */
-          overflow: hidden;
-          margin-bottom: 12px;
-          border-radius: 2px;
+          width: 100%; max-height: 250px; overflow: hidden;
+          margin-bottom: 12px; border-radius: 2px;
           border-bottom: 1px solid rgba(47, 180, 233, 0.2);
-          position: relative;
       }
-      
       .card-image-container img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center; /* User Req */
-          transition: opacity 0.3s ease;
+          width: 100%; height: 100%; object-fit: cover; object-position: center;
       }
-
-      /* Modal View (Detail) */
       .image-preview-wrapper {
-          position: relative;
-          width: 100%;
-          /* Remove max-height restriction for detail view to allow scrolling if needed, 
-             or keep it loose. User said "Full image visible (scrollable)" */
-          margin-bottom: 1rem;
-          border: 1px solid var(--border-color);
-          background: rgba(0,0,0,0.2);
+          position: relative; width: 100%; margin-bottom: 1rem;
+          border: 1px solid var(--border-color); background: rgba(0,0,0,0.2);
       }
-      .image-preview-wrapper img {
-          width: 100%;
-          height: auto; /* Allow full height */
-          display: block;
-      }
-      
+      .image-preview-wrapper img { width: 100%; height: auto; display: block; }
       .btn-remove-image {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background: rgba(0,0,0,0.6);
-          color: white;
-          border: 1px solid rgba(255,255,255,0.3);
-          border-radius: 4px;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          cursor: pointer;
+          position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6);
+          color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;
+          width: 24px; height: 24px; display: flex; align-items: center;
+          justify-content: center; font-size: 12px;
       }
 
-      /* HIDE SCROLLBAR */
       ::-webkit-scrollbar { display: none; }
       body, #main-content, #chat-history { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* UTILS */
       .hidden-force { display: none !important; }
-      
       .scanlines {
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, var(--scanline-color) 50%, var(--scanline-color));
         background-size: 100% 4px;
       }
-
-      /* FONT AWESOME OVERRIDE */
-      i.fa, i.fas, i.far, .fa, .fas {
-          font-family: "Font Awesome 6 Free" !important;
-          font-weight: 900 !important;
-      }
-      
-      /* Chat Bubbles */
-      .chat-bubble {
-          width: fit-content;
-          max-width: 85%;
-          padding: 10px 14px;
-          font-size: 15px;
-          line-height: 1.5;
-          position: relative;
-          word-wrap: break-word;
-          clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-      }
-      
-      .input-tech {
-        background: transparent;
-        border-bottom: 2px solid transparent;
-        font-family: 'Rajdhani', sans-serif;
-      }
+      i.fa, i.fas, i.far, .fa, .fas { font-family: "Font Awesome 6 Free" !important; font-weight: 900 !important; }
+      .input-tech { background: transparent; border-bottom: 2px solid transparent; font-family: 'Rajdhani', sans-serif; }
     </style>
 </head>
 <body class="antialiased selection:bg-cyber-blue selection:text-white relative">
@@ -452,32 +288,29 @@
         </div>
     </div>
 
-    <!-- BACKGROUND LAYERS -->
+    <!-- INSTABILITY MONITOR -->
+    <div id="instability-monitor">
+        <div id="instability-text" class="instability-text instability-up">SOFTWARE INSTABILITY ▲</div>
+    </div>
+
+    <!-- BACKGROUND -->
     <div class="bg-anim-layer"></div>
     <div class="pointer-events-none fixed inset-0 z-0 h-screen w-screen overflow-hidden">
         <div class="scanlines absolute inset-0 opacity-40"></div>
         <div class="absolute inset-0 h-[10%] w-full bg-gradient-to-b from-transparent via-cyber-blue/5 to-transparent animate-scanline"></div>
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.1)_100%)]"></div>
-        <div class="absolute top-2 left-2 text-[0.5rem] font-tech text-cyber-blue/40 tracking-widest">NEXUS_OVERLAY_V1.0</div>
+        <div class="absolute top-2 left-2 text-[0.5rem] font-tech text-cyber-blue/40 tracking-widest">NEXUS_OVERLAY_V2.0</div>
     </div>
 
-    <!-- APP CONTAINER -->
+    <!-- APP -->
     <div id="app" class="relative z-10 flex flex-col min-h-screen w-full transition-colors duration-300">
-        
-        <!-- DASHBOARD VIEW -->
+        <!-- DASHBOARD -->
         <div id="view-dashboard" class="flex flex-col flex-1 h-full">
-            
-            <!-- FIXED HEADER -->
             <div id="fixed-header">
                 <div id="header-container" class="w-full"></div>
                 <div id="tabs-container" class="w-full transition-colors duration-300"></div>
             </div>
-
-            <!-- MAIN CONTENT -->
-            <main id="main-content" class="flex-1 p-6 pb-28 overflow-y-auto scrollbar-hide relative z-10 pt-[140px]">
-                <!-- Injected via JS -->
-            </main>
-
+            <main id="main-content" class="flex-1 p-6 pb-28 overflow-y-auto scrollbar-hide relative z-10 pt-[140px]"></main>
             <!-- FAB -->
             <div class="fixed bottom-24 right-6 z-30">
                 <button id="btn-fab" class="group relative flex items-center justify-center w-14 h-14 focus:outline-none">
@@ -488,82 +321,71 @@
                     <i class="fas fa-plus absolute text-white z-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[40%] pointer-events-none text-lg"></i>
                 </button>
             </div>
-
-            <!-- BOTTOM DOCK -->
+            <!-- DOCK -->
             <nav id="bottom-dock">
-                <button id="btn-dock-memory" class="dock-btn active">
-                    <i class="fas fa-file-alt"></i>
-                    <span>MEMORY</span>
-                </button>
-                <button id="btn-dock-link" class="dock-btn">
-                    <i class="fas fa-comments"></i>
-                    <span>LINK</span>
-                </button>
+                <button id="btn-dock-memory" class="dock-btn active"><i class="fas fa-file-alt"></i><span>MEMORY</span></button>
+                <button id="btn-dock-link" class="dock-btn"><i class="fas fa-comments"></i><span>LINK</span></button>
             </nav>
         </div>
 
-        <!-- SETTINGS VIEW -->
+        <!-- SETTINGS -->
         <div id="view-settings" class="hidden-force flex flex-col flex-1 h-full animate-in fade-in zoom-in-95 duration-200 pb-20 pt-[80px]">
-             <!-- Settings Header -->
             <header class="sticky top-0 z-40 px-6 py-4 glass-panel border-b border-cyber-blue/20 bg-t-glass">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-cog text-cyber-blue animate-spin-slow"></i>
                         <h2 class="font-tech text-lg font-bold tracking-widest text-t-text">SYSTEM_CONFIG</h2>
                     </div>
-                    <button id="btn-settings-back" class="text-[0.6rem] font-bold tracking-widest text-cyber-blue hover:text-cyber-yellow transition-colors border border-cyber-blue/30 px-2 py-1 bg-cyber-blue/5 rounded-sm">
-                        < RETURN
-                    </button>
+                    <button id="btn-settings-back" class="text-[0.6rem] font-bold tracking-widest text-cyber-blue hover:text-cyber-yellow transition-colors border border-cyber-blue/30 px-2 py-1 bg-cyber-blue/5 rounded-sm">< RETURN</button>
                 </div>
             </header>
 
             <div class="p-6 space-y-8">
-                 <!-- Theme Section -->
+                <!-- THEME -->
                 <section>
                     <h3 class="text-xs font-bold tracking-[0.2em] text-t-muted mb-4 border-b border-t-border pb-2">INTERFACE MODE</h3>
                     <div class="flex flex-col gap-3">
                         <label class="theme-option relative flex items-center p-3 border border-t-border rounded cursor-pointer hover:border-cyber-blue transition-colors bg-t-card group">
                             <input type="radio" name="theme-select" value="auto" class="peer hidden">
-                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue">
-                                <div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                            </div>
+                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue"><div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div></div>
                             <span class="font-bold text-sm text-t-text tracking-wider group-hover:text-cyber-blue transition-colors">AUTO // SYSTEM</span>
                         </label>
                         <label class="theme-option relative flex items-center p-3 border border-t-border rounded cursor-pointer hover:border-cyber-blue transition-colors bg-t-card group">
                             <input type="radio" name="theme-select" value="light" class="peer hidden">
-                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue">
-                                <div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                            </div>
+                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue"><div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div></div>
                             <span class="font-bold text-sm text-t-text tracking-wider group-hover:text-cyber-blue transition-colors">MACHINE // LIGHT</span>
                         </label>
                         <label class="theme-option relative flex items-center p-3 border border-t-border rounded cursor-pointer hover:border-cyber-blue transition-colors bg-t-card group">
                             <input type="radio" name="theme-select" value="dark" class="peer hidden">
-                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue">
-                                <div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                            </div>
+                            <div class="w-4 h-4 border border-gray-400 rounded-full flex items-center justify-center mr-3 peer-checked:border-cyber-blue"><div class="w-2 h-2 bg-cyber-blue rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div></div>
                             <span class="font-bold text-sm text-t-text tracking-wider group-hover:text-cyber-blue transition-colors">DEVIANT // DARK</span>
                         </label>
                     </div>
                 </section>
                 
-                 <!-- SYSTEM RESET -->
+                <!-- IMPORT / EXPORT -->
+                <section class="pt-6 border-t border-t-border">
+                    <h3 class="text-xs font-bold tracking-[0.2em] text-cyber-blue mb-4 flex items-center gap-2"><i class="fas fa-database"></i> MEMORY BACKUP</h3>
+                    <div class="flex gap-3">
+                        <button id="btn-export-data" class="flex-1 py-3 border border-cyber-blue text-cyber-blue bg-cyber-blue/5 hover:bg-cyber-blue/15 transition-all text-xs font-bold tracking-widest flex items-center justify-center gap-2"><i class="fas fa-download"></i> EXPORT</button>
+                        <button id="btn-import-data" class="flex-1 py-3 border border-cyber-yellow text-cyber-yellow bg-cyber-yellow/5 hover:bg-cyber-yellow/15 transition-all text-xs font-bold tracking-widest flex items-center justify-center gap-2"><i class="fas fa-file-import"></i> IMPORT JSON</button>
+                        <input type="file" id="input-import-file" accept=".json" class="hidden-force">
+                    </div>
+                </section>
+                
+                 <!-- RESET -->
                  <section class="mt-8 pt-6 border-t border-cyber-red/30">
-                    <h3 class="text-xs font-bold tracking-[0.2em] text-cyber-red mb-4 flex items-center gap-2">
-                        <i class="fas fa-exclamation-triangle"></i> SYSTEM RESET
-                    </h3>
-                    <button id="btn-wipe-data" class="w-full py-4 border border-cyber-red text-cyber-red bg-cyber-red/10 hover:bg-cyber-red/20 transition-all duration-300 text-xs font-bold tracking-widest flex items-center justify-center gap-2 group">
-                        <span class="group-hover:animate-pulse">[ ! ] INITIALIZE MEMORY WIPE</span>
-                    </button>
+                    <h3 class="text-xs font-bold tracking-[0.2em] text-cyber-red mb-4 flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> SYSTEM RESET</h3>
+                    <button id="btn-wipe-data" class="w-full py-4 border border-cyber-red text-cyber-red bg-cyber-red/10 hover:bg-cyber-red/20 transition-all text-xs font-bold tracking-widest flex items-center justify-center gap-2 group"><span class="group-hover:animate-pulse">[ ! ] INITIALIZE MEMORY WIPE</span></button>
                 </section>
             </div>
         </div>
     </div>
 
-    <!-- NOTE MODAL -->
+    <!-- MODALS -->
     <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden-force">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" id="modal-backdrop"></div>
         <div id="modal-content-panel" class="relative w-full max-w-sm bg-t-panel border-t-4 border-t-cyber-blue border-b border-x border-t-border shadow-[0_0_30px_rgba(47,180,233,0.3)] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <!-- Modal Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b border-t-border bg-t-glass">
                 <div class="flex items-center gap-2">
                     <div id="modal-status-dot" class="w-2 h-2 rounded-full bg-cyber-blue"></div>
@@ -576,34 +398,22 @@
                     <button id="btn-close-modal" class="ml-1 text-gray-400 hover:text-cyber-red"><i class="fas fa-times text-xl"></i></button>
                 </div>
             </div>
-
-            <!-- Modal Content -->
             <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
                 <input type="hidden" id="note-id">
-                
-                <!-- Folder Select -->
                 <div class="flex items-center justify-between border-b border-t-border pb-2 mb-5">
                     <label class="text-[0.6rem] font-bold tracking-widest text-gray-400 uppercase">PARTITION //</label>
                     <div class="relative flex-1 text-right">
                         <select id="select-folder" class="bg-transparent text-[0.65rem] font-tech text-cyber-blue focus:outline-none text-right appearance-none cursor-pointer uppercase tracking-wider w-full font-bold pr-4 disabled:opacity-70"></select>
                     </div>
                 </div>
-
-                <!-- Image Preview -->
                 <div id="image-preview-container" class="hidden-force mb-4 relative group">
-                    <div class="image-preview-wrapper">
-                        <img id="image-preview-img" src="" alt="Visual Data">
-                    </div>
+                    <div class="image-preview-wrapper"><img id="image-preview-img" src=""></div>
                     <button id="btn-remove-image" class="btn-remove-image hidden-force"><i class="fas fa-times"></i></button>
                 </div>
-
-                <!-- Title -->
                 <div class="space-y-1 mb-5">
                     <label class="text-[0.6rem] font-bold tracking-widest text-gray-400 uppercase">Subject // Identifier</label>
                     <input type="text" id="note-title" class="input-tech w-full py-2 text-base text-t-text focus:outline-none bg-transparent border-b-2 border-transparent font-bold text-lg" readonly>
                 </div>
-
-                <!-- Text Mode -->
                 <div id="section-text-mode" class="space-y-1 mb-6">
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-[0.6rem] font-bold tracking-widest text-gray-400 uppercase">Data // Content</label>
@@ -614,8 +424,6 @@
                     </div>
                     <textarea id="note-content" class="input-tech w-full h-48 py-2 text-t-text focus:outline-none resize-none leading-relaxed bg-transparent border-b-2 border-transparent" readonly></textarea>
                 </div>
-
-                <!-- Chat Mode -->
                 <div id="section-chat-mode" class="mb-6 hidden-force flex flex-col h-64">
                      <label class="text-[0.6rem] font-bold tracking-widest text-gray-400 uppercase mb-2">Transcript // Log</label>
                      <div id="chat-history" class="flex-1 overflow-y-auto bg-t-input border border-t-border p-3 mb-3 rounded-sm"></div>
@@ -624,8 +432,6 @@
                          <button id="btn-chat-send" class="text-cyber-blue px-3"><i class="fas fa-paper-plane"></i></button>
                      </div>
                 </div>
-
-                <!-- Actions -->
                 <div class="flex gap-3 pt-2 items-center" id="modal-actions"></div>
             </div>
         </div>
@@ -675,7 +481,7 @@
             tempIsMission: false,
             tempImage: null,
             isMaximized: false,
-            theme: 'dark', // Default to Dark as per CyberLife req
+            theme: 'dark',
             currentView: 'dashboard',
             searchQuery: '',
             isSearchOpen: false,
@@ -684,7 +490,7 @@
             currentAppMode: 'text'
         };
         
-        // --- INDEXED DB SETUP (Async Storage) ---
+        // --- INDEXED DB (Async) ---
         const DB_CONFIG = { name: 'NexusArchiveDB', version: 1, store: 'notes' };
         const DB = {
             instance: null,
@@ -733,16 +539,90 @@
             }
         };
 
+        // --- AUDIO SYSTEM (PROCEDURAL) ---
+        const SoundFX = {
+            ctx: null,
+            init: function() {
+                if(!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            playOsc: function(freq, type, duration, volStart=0.1, volEnd=0.001) {
+                if(!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(volStart, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(volEnd, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            playClick: function() { this.playOsc(2000, 'sine', 0.05, 0.05); },
+            playSuccess: function() {
+                if(!this.ctx) this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99].forEach((f, i) => { // C Major
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.value = f;
+                    gain.gain.setValueAtTime(0.05, now + i*0.05);
+                    gain.gain.linearRampToValueAtTime(0, now + i*0.05 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i*0.05);
+                    osc.stop(now + i*0.05 + 0.3);
+                });
+            },
+            playDelete: function() { this.playOsc(150, 'sawtooth', 0.3, 0.1); },
+            playUIOpen: function() {
+                if(!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+        };
+
+        // --- INSTABILITY VISUALS ---
+        function triggerInstability(type) {
+            const mon = document.getElementById('instability-monitor');
+            const txt = document.getElementById('instability-text');
+            mon.style.opacity = '1';
+            
+            if(type === 'up') {
+                txt.textContent = "SOFTWARE INSTABILITY ▲";
+                txt.className = "instability-text instability-up";
+            } else {
+                txt.textContent = "SYSTEM STABILIZING ▼";
+                txt.className = "instability-text instability-down";
+            }
+            
+            // Clear prev timeout
+            if(window.instabilityTimeout) clearTimeout(window.instabilityTimeout);
+            window.instabilityTimeout = setTimeout(() => {
+                mon.style.opacity = '0';
+            }, 2000);
+        }
+
         // --- CONSTANTS ---
         const STORAGE_KEY_FOLDERS = 'ra9-folders-v4';
         const STORAGE_KEY_THEME = 'ra9-theme';
 
-        // --- BOOT SEQUENCE LOGIC ---
+        // --- BOOT SEQUENCE ---
         window.addEventListener('load', () => {
             const bootScreen = document.getElementById('boot-screen');
             const bootText = document.getElementById('boot-text');
             if(!bootScreen || !bootText) return;
-            
             const steps = ["CONNECTING TO ARCHIVE...", "LOADING MEMORY CORE...", "DECRYPTING DATA...", "SYSTEM ONLINE"];
             let stepIndex = 0;
             const interval = setInterval(() => {
@@ -757,7 +637,7 @@
             }, 500);
         });
 
-        // --- SYSTEM CLOCK ---
+        // --- CLOCK ---
         function initSystemClock() {
             function updateTime() {
                 const el = document.getElementById('system-clock');
@@ -772,7 +652,7 @@
             setInterval(updateTime, 1000);
         }
 
-        // --- CORE APP LOGIC ---
+        // --- APP INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             initTheme();
@@ -780,40 +660,40 @@
             initSystemClock();
         });
 
-        // --- EVENT DELEGATION ---
+        // --- INTERACTION HANDLERS ---
         let inputCallback = null;
         document.addEventListener('click', function(e) {
             const target = e.target;
             
-            // Search
+            // Audio Trigger on any button interaction
+            if(target.tagName === 'BUTTON' || target.closest('button') || target.closest('.note-card') || target.closest('.nav-tab')) {
+                SoundFX.playClick();
+            }
+
+            // --- NAVIGATION ---
             if (target.closest('.btn-action-search')) toggleSearch();
             if (target.closest('#btn-close-search')) closeSearch();
-            
-            // Settings
-            if (target.closest('.btn-action-settings')) setView('settings');
+            if (target.closest('.btn-action-settings')) { setView('settings'); SoundFX.playUIOpen(); }
             if (target.closest('#btn-settings-back')) setView('dashboard');
-
-            // Tabs / Navigation
+            
+            // --- TABS ---
             if (target.closest('.nav-tab')) {
                 const btn = target.closest('.nav-tab');
                 STORE.activeFolderId = btn.getAttribute('data-id');
-                renderTabs();
-                renderMemoryList();
+                renderTabs(); renderMemoryList();
             }
             if (target.closest('#btn-add-folder')) {
                 requestInput("NEW DIRECTORY NAME", (name) => {
                     if (name && name.trim()) {
                         const newF = { id: `folder-${Date.now()}`, name: name.trim().toUpperCase() };
                         STORE.folders.push(newF);
-                        saveFolders();
-                        STORE.activeFolderId = newF.id;
-                        renderTabs();
-                        renderMemoryList();
+                        saveFolders(); STORE.activeFolderId = newF.id;
+                        renderTabs(); renderMemoryList();
                     }
                 });
             }
 
-            // Cards & Modal
+            // --- CARDS ---
             if (target.closest('.note-card') && !target.closest('.btn-trash-card')) {
                 const id = target.closest('.note-card').getAttribute('data-id');
                 const mem = STORE.memories.find(m => m.id === id);
@@ -822,7 +702,7 @@
             if (target.closest('#btn-fab')) openModal(null, STORE.currentAppMode);
             if (target.closest('#btn-close-modal') || target.closest('#modal-backdrop') || target.closest('#btn-cancel-note')) closeModal();
             
-            // Modal Actions
+            // --- MODAL ACTIONS ---
             if (target.closest('#btn-edit-mode')) setEditMode(false);
             if (target.closest('#btn-save-note')) saveNote();
             if (target.closest('#btn-delete-note')) deleteNote(document.getElementById('note-id').value);
@@ -830,41 +710,40 @@
                 e.stopPropagation();
                 deleteNote(target.closest('.btn-trash-card').getAttribute('data-id'));
             }
-
-            // Modal Toggles
             if (target.closest('#btn-toggle-pin')) togglePin();
             if (target.closest('#btn-toggle-mission')) toggleMission();
             if (target.closest('#btn-toggle-complete')) toggleCompletion();
             if (target.closest('#btn-maximize')) toggleMaximize();
-            
-            // Image
             if (target.closest('#btn-add-image')) document.getElementById('input-image-file').click();
             if (target.closest('#btn-remove-image')) removeImage();
 
-            // Dock
+            // --- DOCK ---
             if (target.closest('#btn-dock-memory')) setAppMode('text');
             if (target.closest('#btn-dock-link')) setAppMode('chat');
             
-            // Input Modal
+            // --- INPUT MODAL ---
             if (target.closest('#btn-input-confirm')) {
                 if(inputCallback) inputCallback(document.getElementById('input-value').value);
                 closeInputModal();
             }
-            if (target.closest('#btn-input-cancel')) { closeInputModal(); }
+            if (target.closest('#btn-input-cancel')) closeInputModal();
             
-            // Settings Actions
+            // --- SETTINGS / DATA ---
             if (target.closest('#btn-wipe-data')) document.getElementById('modal-warning').classList.remove('hidden-force');
             if (target.closest('#btn-warning-confirm')) {
                 DB.clear().then(() => { localStorage.clear(); location.reload(); });
             }
             if (target.closest('#btn-warning-cancel')) document.getElementById('modal-warning').classList.add('hidden-force');
-            
-            // Theme Radio
             if (target.name === 'theme-select') setTheme(target.value);
+            
+            // Export / Import
+            if (target.closest('#btn-export-data')) exportData();
+            if (target.closest('#btn-import-data')) document.getElementById('input-import-file').click();
         });
 
-        // --- FILE & INPUT HANDLERS ---
+        // --- FILE HANDLERS ---
         document.addEventListener('change', (e) => {
+            // Image Upload
             if (e.target.id === 'input-image-file') {
                 const file = e.target.files[0];
                 if (file) {
@@ -878,13 +757,34 @@
                     reader.readAsDataURL(file);
                 }
             }
+            // JSON Import
+            if (e.target.id === 'input-import-file') {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if(Array.isArray(data.memories)) {
+                                for(const m of data.memories) { await DB.put(m); }
+                            }
+                            if(data.folders) {
+                                localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(data.folders));
+                            }
+                            alert("MEMORY RESTORED");
+                            location.reload();
+                        } catch(err) { alert("CORRUPT DATA"); }
+                    };
+                    reader.readAsText(file);
+                }
+            }
+            // Folder Create
             if (e.target.id === 'select-folder' && e.target.value === 'CREATE_NEW_TRIGGER') {
                  requestInput("NEW PARTITION", (name) => {
                      if(name) {
                          const f = { id: `folder-${Date.now()}`, name: name.toUpperCase() };
                          STORE.folders.push(f);
-                         saveFolders();
-                         populateFolderSelect();
+                         saveFolders(); populateFolderSelect();
                          document.getElementById('select-folder').value = f.id;
                      }
                  });
@@ -893,29 +793,34 @@
         
         document.addEventListener('input', (e) => {
             if(e.target.id === 'input-search') {
-                STORE.searchQuery = e.target.value;
-                renderMemoryList();
+                STORE.searchQuery = e.target.value; renderMemoryList();
             }
         });
 
-        // --- FUNCTIONS ---
+        // --- LOGIC ---
         
         async function loadData() {
             await DB.init();
             let mems = await DB.getAll();
             if (mems.length === 0) {
-                 // Seed
-                 const def = {
-                     id: 'MEM-001', title: '// SYSTEM_READY', content: 'NEXUS ARCHIVE ONLINE. Welcome User.', 
-                     folderId: 'all', lastUpdated: new Date().toISOString(), type: 'text', isPinned: true
-                 };
-                 await DB.put(def);
-                 mems = [def];
+                 const def = { id: 'MEM-001', title: '// SYSTEM_READY', content: 'NEXUS ARCHIVE V2.0 ONLINE.', folderId: 'all', lastUpdated: new Date().toISOString(), type: 'text', isPinned: true };
+                 await DB.put(def); mems = [def];
             }
             STORE.memories = mems;
             const folds = localStorage.getItem(STORAGE_KEY_FOLDERS);
             STORE.folders = folds ? JSON.parse(folds) : [{id:'all', name:'ALL'}];
             renderApp();
+        }
+
+        function exportData() {
+            const data = { memories: STORE.memories, folders: STORE.folders, v: '2.0' };
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `NEXUS_BACKUP_${Date.now()}.json`;
+            a.click();
+            SoundFX.playSuccess();
         }
 
         function renderApp() { renderHeader(); renderTabs(); renderMemoryList(); }
@@ -939,7 +844,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
                                 <h1 class="font-tech text-xl font-bold tracking-widest text-t-text">NEXUS</h1>
-                                <span class="text-[0.6rem] font-bold tracking-[0.2em] text-cyber-blue">ARCHIVE // v1.0</span>
+                                <span class="text-[0.6rem] font-bold tracking-[0.2em] text-cyber-blue">ARCHIVE // v2.0</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div id="system-clock" class="hidden sm:block">00:00:00</div>
@@ -964,29 +869,21 @@
         function renderMemoryList() {
             const container = document.getElementById('main-content');
             let filtered = STORE.memories.filter(m => STORE.currentAppMode === 'chat' ? m.type === 'chat' : (!m.type || m.type === 'text'));
-            
             if (STORE.activeFolderId !== 'all') filtered = filtered.filter(m => m.folderId === STORE.activeFolderId);
-            
-            // Search & Highlight Logic
             if (STORE.searchQuery) {
                 const q = STORE.searchQuery.toLowerCase();
                 filtered = filtered.filter(m => (m.title && m.title.toLowerCase().includes(q)) || (m.content && m.content.toLowerCase().includes(q)));
             }
-
             filtered.sort((a, b) => (a.isPinned === b.isPinned) ? new Date(b.lastUpdated) - new Date(a.lastUpdated) : (a.isPinned ? -1 : 1));
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="flex flex-col items-center justify-center h-[50vh] opacity-60"><i class="fas fa-cube fa-2x mb-4 text-cyber-blue animate-pulse"></i><span class="text-xs tracking-widest">NO_DATA_FOUND</span></div>`;
                 return;
             }
-
             container.innerHTML = filtered.map(m => {
                 const folder = STORE.folders.find(f => f.id === m.folderId);
                 const folderName = folder ? folder.name : 'ALL';
-                
-                // Highlight
-                let dTitle = m.title;
-                let dContent = m.content;
+                let dTitle = m.title; let dContent = m.content;
                 if(STORE.searchQuery) {
                     try {
                         const regex = new RegExp(`(${STORE.searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
@@ -994,10 +891,7 @@
                         dContent = dContent.substring(0, 150).replace(regex, '<span class="search-highlight">$1</span>');
                     } catch(e){}
                 }
-
-                // Image HTML (List View - Max Height 250px, Centered)
                 const imgHtml = m.image ? `<div class="card-image-container"><img src="${m.image}" loading="lazy"></div>` : '';
-
                 return `
                 <div class="note-card glass-panel p-5 mb-4 relative rounded-sm border-t-border hover:border-cyber-blue transition-all ${m.isPinned ? 'border-cyber-yellow' : ''}" data-id="${m.id}">
                     <div class="absolute top-2 right-2 text-[10px] text-cyber-blue border border-cyber-blue/30 px-1 font-bold">${folderName}</div>
@@ -1016,8 +910,8 @@
             }).join('');
         }
 
-        // --- MODAL LOGIC ---
         function openModal(mem, forceType) {
+            SoundFX.playUIOpen();
             STORE.editingMemoryId = mem ? mem.id : null;
             STORE.tempIsPinned = mem ? !!mem.isPinned : false;
             STORE.tempIsMission = mem ? !!mem.isMission : false;
@@ -1029,19 +923,15 @@
             document.getElementById('note-title').value = mem ? mem.title : '';
             document.getElementById('note-content').value = mem ? mem.content : '';
             
-            // Image Preview in Modal (Full View)
             const imgContainer = document.getElementById('image-preview-container');
             const imgEl = document.getElementById('image-preview-img');
             if (STORE.tempImage) {
                 imgEl.src = STORE.tempImage;
                 imgContainer.classList.remove('hidden-force');
-            } else {
-                imgContainer.classList.add('hidden-force');
-            }
+            } else { imgContainer.classList.add('hidden-force'); }
 
             populateFolderSelect();
             document.getElementById('select-folder').value = mem ? (mem.folderId || 'all') : STORE.activeFolderId;
-            
             if (mem) setReadMode(); else setEditMode(true);
             document.getElementById('modal-container').classList.remove('hidden-force');
         }
@@ -1051,11 +941,9 @@
             document.getElementById('note-title').removeAttribute('readonly');
             document.getElementById('note-title').classList.remove('bg-transparent', 'border-transparent');
             document.getElementById('note-title').classList.add('bg-t-input', 'border-t-border');
-            
             document.getElementById('note-content').removeAttribute('readonly');
             document.getElementById('note-content').classList.remove('bg-transparent', 'border-transparent');
             document.getElementById('note-content').classList.add('bg-t-input', 'border-t-border');
-            
             document.getElementById('select-folder').disabled = false;
             document.getElementById('btn-add-image').classList.remove('hidden-force');
             if (STORE.tempImage) document.getElementById('btn-remove-image').classList.remove('hidden-force');
@@ -1073,20 +961,17 @@
             document.getElementById('note-title').setAttribute('readonly', true);
             document.getElementById('note-title').classList.add('bg-transparent', 'border-transparent');
             document.getElementById('note-title').classList.remove('bg-t-input', 'border-t-border');
-
             document.getElementById('note-content').setAttribute('readonly', true);
             document.getElementById('note-content').classList.add('bg-transparent', 'border-transparent');
             document.getElementById('note-content').classList.remove('bg-t-input', 'border-t-border');
-
             document.getElementById('select-folder').disabled = true;
             document.getElementById('btn-add-image').classList.add('hidden-force');
             document.getElementById('btn-remove-image').classList.add('hidden-force');
-
+            
             let completeBtn = '';
             if (STORE.tempIsMission) {
                 completeBtn = `<button id="btn-toggle-complete" class="flex-1 py-3 border border-cyber-green text-cyber-green text-xs font-bold">${STORE.tempIsCompleted ? 'RESTORE' : 'COMPLETE'}</button>`;
             }
-
             document.getElementById('modal-actions').innerHTML = `
                 <button id="btn-delete-note" class="p-3 border border-cyber-red text-cyber-red"><i class="fas fa-trash"></i></button>
                 ${completeBtn}
@@ -1099,35 +984,27 @@
         async function saveNote() {
             const id = document.getElementById('note-id').value || `MEM-${Date.now()}`;
             const note = {
-                id,
-                title: document.getElementById('note-title').value || 'UNTITLED',
+                id, title: document.getElementById('note-title').value || 'UNTITLED',
                 content: document.getElementById('note-content').value,
                 folderId: document.getElementById('select-folder').value,
                 lastUpdated: new Date().toISOString(),
-                isPinned: STORE.tempIsPinned,
-                isMission: STORE.tempIsMission,
-                isCompleted: STORE.tempIsCompleted,
-                image: STORE.tempImage,
-                type: STORE.currentNoteType
+                isPinned: STORE.tempIsPinned, isMission: STORE.tempIsMission, isCompleted: STORE.tempIsCompleted,
+                image: STORE.tempImage, type: STORE.currentNoteType
             };
             await DB.put(note);
-            await loadData(); // Reload all
-            closeModal();
+            await loadData(); closeModal();
+            SoundFX.playSuccess();
+            triggerInstability('up');
         }
 
         async function deleteNote(id) {
             if(id) await DB.delete(id);
-            await loadData();
-            closeModal();
+            await loadData(); closeModal();
+            SoundFX.playDelete();
+            triggerInstability('down');
         }
 
-        function removeImage() {
-            STORE.tempImage = null;
-            document.getElementById('image-preview-container').classList.add('hidden-force');
-            document.getElementById('input-image-file').value = '';
-        }
-
-        // --- UTILS ---
+        function removeImage() { STORE.tempImage = null; document.getElementById('image-preview-container').classList.add('hidden-force'); document.getElementById('input-image-file').value = ''; }
         function toggleSearch() { STORE.isSearchOpen = !STORE.isSearchOpen; renderHeader(); if(STORE.isSearchOpen) setTimeout(()=>document.getElementById('input-search').focus(), 50); }
         function closeSearch() { STORE.isSearchOpen = false; STORE.searchQuery = ''; renderHeader(); renderMemoryList(); }
         function setView(v) { STORE.currentView = v; document.getElementById('view-dashboard').classList.toggle('hidden-force', v!=='dashboard'); document.getElementById('view-settings').classList.toggle('hidden-force', v!=='settings'); }
@@ -1141,29 +1018,17 @@
             sel.innerHTML = STORE.folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('') + `<option value="CREATE_NEW_TRIGGER" class="text-cyber-blue font-bold">+ NEW PARTITION</option>`; 
         }
         function requestInput(t, cb) { 
-            inputCallback = cb; 
-            document.getElementById('modal-input-title').textContent = t; 
-            document.getElementById('input-value').value = '';
-            document.getElementById('modal-input').classList.remove('hidden-force'); 
-            setTimeout(()=>document.getElementById('input-value').focus(),50); 
+            inputCallback = cb; document.getElementById('modal-input-title').textContent = t; document.getElementById('input-value').value = '';
+            document.getElementById('modal-input').classList.remove('hidden-force'); setTimeout(()=>document.getElementById('input-value').focus(),50); 
         }
         function closeInputModal() { document.getElementById('modal-input').classList.add('hidden-force'); inputCallback = null; }
         function closeModal() { document.getElementById('modal-container').classList.add('hidden-force'); STORE.isModalOpen = false; }
-        
-        function initTheme() {
-            const t = localStorage.getItem(STORAGE_KEY_THEME) || 'dark';
-            setTheme(t);
-        }
+        function saveFolders() { localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(STORE.folders)); }
+        function initTheme() { const t = localStorage.getItem(STORAGE_KEY_THEME) || 'dark'; setTheme(t); }
         function setTheme(t) {
-            STORE.theme = t;
-            localStorage.setItem(STORAGE_KEY_THEME, t);
-            if (t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.body.setAttribute('data-theme', 'dark');
-            } else {
-                document.body.removeAttribute('data-theme');
-            }
+            STORE.theme = t; localStorage.setItem(STORAGE_KEY_THEME, t);
+            if (t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.body.setAttribute('data-theme', 'dark'); } else { document.body.removeAttribute('data-theme'); }
         }
-
     </script>
 </body>
 </html>
