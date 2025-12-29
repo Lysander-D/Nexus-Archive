@@ -202,6 +202,30 @@
           transition: background-color 0.3s ease;
           /* Safe Area Notch Support */
           padding-top: max(10px, env(safe-area-inset-top));
+          
+          /* FLEX LAYOUT FOR CLOCK/TITLE */
+          display: flex;
+          flex-direction: column;
+      }
+      
+      /* SYSTEM CLOCK STYLES */
+      #system-clock {
+          font-family: 'Rajdhani', sans-serif;
+          font-weight: 600;
+          color: rgba(47, 180, 233, 0.9);
+          font-size: 16px;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 1px;
+          text-shadow: 0 0 5px rgba(47, 180, 233, 0.3);
+          margin-right: 12px;
+      }
+      
+      /* Mobile adjustment for clock: Scale down slightly if needed on very small screens */
+      @media (max-width: 340px) {
+          #system-clock {
+              font-size: 14px;
+              margin-right: 8px;
+          }
       }
 
       /* BOTTOM DOCK STYLES */
@@ -438,6 +462,10 @@
         border: none !important;
         margin: 0 !important;
         z-index: 60 !important; /* Above everything else */
+        
+        /* SAFE AREA FIX */
+        padding-top: max(20px, env(safe-area-inset-top)) !important;
+        box-sizing: border-box;
       }
 
       /* COMPLETED MISSION STYLES */
@@ -476,6 +504,44 @@
       .purging {
           animation: dataPurge 0.4s ease-out forwards;
           pointer-events: none;
+      }
+      
+      /* IMAGE PREVIEW STYLES */
+      .image-preview-wrapper {
+          position: relative;
+          width: 100%;
+          max-height: 250px;
+          overflow: hidden;
+          border-radius: 4px;
+          border: 1px solid var(--border-color);
+          margin-bottom: 1rem;
+      }
+      .image-preview-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          background: rgba(0,0,0,0.2);
+      }
+      .btn-remove-image {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: rgba(0,0,0,0.6);
+          color: white;
+          border: 1px solid rgba(255,255,255,0.3);
+          border-radius: 4px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+      }
+      .btn-remove-image:hover {
+          background: rgba(230,51,56,0.8);
+          border-color: #E63338;
       }
 
       /* Utility for transitions */
@@ -715,6 +781,16 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- IMAGE PREVIEW AREA -->
+                <div id="image-preview-container" class="hidden-force mb-4 relative group animate-fade-in">
+                    <div class="image-preview-wrapper">
+                        <img id="image-preview-img" src="" alt="Memory Visual">
+                    </div>
+                    <button id="btn-remove-image" class="btn-remove-image hidden-force" title="Remove Image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
                 <!-- Title Input -->
                 <div class="space-y-1 mb-5">
@@ -726,10 +802,18 @@
                 <div id="section-text-mode" class="space-y-1 mb-6">
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-[0.6rem] font-bold tracking-widest text-gray-400 uppercase">Data // Content</label>
-                        <!-- Voice Button for Text Mode -->
-                        <button id="btn-voice-text" class="hidden-force text-t-muted hover:text-cyber-red transition-all p-1" title="Voice Input">
-                            <i class="fas fa-microphone"></i>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <!-- Image Button -->
+                            <button id="btn-add-image" class="hidden-force text-t-muted hover:text-cyber-blue transition-all p-1" title="Attach Visual">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <input type="file" id="input-image-file" accept="image/*" class="hidden-force">
+                            
+                            <!-- Voice Button -->
+                            <button id="btn-voice-text" class="hidden-force text-t-muted hover:text-cyber-red transition-all p-1" title="Voice Input">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
                     </div>
                     <textarea id="note-content" class="input-tech w-full h-48 py-2 font-sans text-t-text focus:outline-none transition-all duration-300 resize-none leading-relaxed bg-transparent border-b-2 border-transparent cursor-default" placeholder="No data available." readonly></textarea>
                 </div>
@@ -832,6 +916,7 @@
             tempIsPinned: false, // Temp state for modal
             tempIsCompleted: false, // Temp state for completion
             tempIsMission: false, // Temp state for mission
+            tempImage: null, // Temp Base64 string for image upload
             isMaximized: false, // Maximize Modal State
             theme: 'auto', // 'auto' | 'light' | 'dark'
             currentView: 'dashboard', // 'dashboard' | 'settings'
@@ -844,6 +929,69 @@
             currentAppMode: 'text' // 'text' (Memory) | 'chat' (Link)
         };
         
+        // --- INDEXED DB SETUP ---
+        const DB_CONFIG = {
+            name: 'NexusArchiveDB',
+            version: 1,
+            store: 'notes'
+        };
+
+        const DB = {
+            instance: null,
+            init: async () => {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(DB_CONFIG.store)) {
+                            db.createObjectStore(DB_CONFIG.store, { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = (e) => {
+                        DB.instance = e.target.result;
+                        resolve(DB.instance);
+                    };
+                    request.onerror = (e) => reject(e);
+                });
+            },
+            getAll: async () => {
+                return new Promise((resolve, reject) => {
+                    const tx = DB.instance.transaction(DB_CONFIG.store, 'readonly');
+                    const store = tx.objectStore(DB_CONFIG.store);
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            put: async (note) => {
+                return new Promise((resolve, reject) => {
+                    const tx = DB.instance.transaction(DB_CONFIG.store, 'readwrite');
+                    const store = tx.objectStore(DB_CONFIG.store);
+                    const request = store.put(note);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            delete: async (id) => {
+                return new Promise((resolve, reject) => {
+                    const tx = DB.instance.transaction(DB_CONFIG.store, 'readwrite');
+                    const store = tx.objectStore(DB_CONFIG.store);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            },
+            clear: async () => {
+                return new Promise((resolve, reject) => {
+                     const tx = DB.instance.transaction(DB_CONFIG.store, 'readwrite');
+                     const store = tx.objectStore(DB_CONFIG.store);
+                     const request = store.clear();
+                     request.onsuccess = () => resolve();
+                     request.onerror = () => reject(request.error);
+                });
+            }
+        };
+
         // --- VOICE RECOGNITION SETUP ---
         let recognition = null;
         let isRecording = false;
@@ -900,7 +1048,7 @@
 
         let inputCallback = null;
 
-        const STORAGE_KEY_MEMORIES = 'ra9-memories-v4';
+        const STORAGE_KEY_MEMORIES_LEGACY = 'ra9-memories-v4';
         const STORAGE_KEY_FOLDERS = 'ra9-folders-v4';
         const STORAGE_KEY_THEME = 'ra9-theme';
 
@@ -966,12 +1114,28 @@
             }
         }
 
+        // --- CLOCK LOGIC ---
+        function startClock() {
+            function update() {
+                const el = document.getElementById('system-clock');
+                if (el) {
+                    const now = new Date();
+                    const h = String(now.getHours()).padStart(2, '0');
+                    const m = String(now.getMinutes()).padStart(2, '0');
+                    const s = String(now.getSeconds()).padStart(2, '0');
+                    el.textContent = `${h}:${m}:${s}`;
+                }
+            }
+            setInterval(update, 1000);
+            update(); // run immediately
+        }
+
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             initTheme();
             renderApp();
-            // startClock(); // Removed clock initialization for Branding
+            startClock();
         });
 
         // --- GLOBAL EVENT DELEGATION ---
@@ -1145,10 +1309,12 @@
 
             if (target.id === 'btn-warning-confirm' || target.closest('#btn-warning-confirm')) {
                 playSystemSound('error');
-                localStorage.removeItem(STORAGE_KEY_MEMORIES);
-                localStorage.removeItem(STORAGE_KEY_FOLDERS);
-                localStorage.removeItem(STORAGE_KEY_THEME);
-                setTimeout(() => location.reload(), 200);
+                // Clear IDB and Local Storage
+                DB.clear().then(() => {
+                    localStorage.removeItem(STORAGE_KEY_FOLDERS);
+                    localStorage.removeItem(STORAGE_KEY_THEME);
+                    setTimeout(() => location.reload(), 200);
+                });
             }
             
             // 20. SEARCH TOGGLE
@@ -1199,12 +1365,27 @@
             if (target.id === 'btn-import-data' || target.closest('#btn-import-data')) {
                 document.getElementById('file-upload-input').click();
             }
+            
+            // 28. IMAGE UPLOAD TRIGGER
+            if (target.id === 'btn-add-image' || target.closest('#btn-add-image')) {
+                document.getElementById('input-image-file').click();
+            }
+            
+            // 29. IMAGE REMOVE
+            if (target.id === 'btn-remove-image' || target.closest('#btn-remove-image')) {
+                removeImage();
+            }
         });
         
-        // File Input Change (Import)
+        // File Input Change (Import & Image)
         document.addEventListener('change', function(e) {
+            // Import Backup
             if (e.target && e.target.id === 'file-upload-input') {
                 importData(e.target);
+            }
+            // Image Upload
+            if (e.target && e.target.id === 'input-image-file') {
+                handleImageUpload(e.target);
             }
             
             // Dropdown Logic
@@ -1363,13 +1544,21 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const json = JSON.parse(e.target.result);
                     
                     // Basic Validation
                     if (json.memories && Array.isArray(json.memories) && json.folders && Array.isArray(json.folders)) {
-                        localStorage.setItem(STORAGE_KEY_MEMORIES, JSON.stringify(json.memories));
+                        
+                        // CLEAR EXISTING
+                        await DB.clear();
+
+                        // ADD NEW
+                        for (const mem of json.memories) {
+                            await DB.put(mem);
+                        }
+                        
                         localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(json.folders));
                         
                         alert("Data backup loaded successfully. System will reboot.");
@@ -1383,6 +1572,37 @@
                 }
             };
             reader.readAsText(file);
+        }
+
+        // --- IMAGE LOGIC ---
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // High Quality Base64
+                STORE.tempImage = e.target.result;
+                
+                // Show Preview
+                const previewContainer = document.getElementById('image-preview-container');
+                const previewImg = document.getElementById('image-preview-img');
+                const removeBtn = document.getElementById('btn-remove-image');
+                
+                previewImg.src = STORE.tempImage;
+                previewContainer.classList.remove('hidden-force');
+                
+                if (STORE.isEditMode) {
+                    removeBtn.classList.remove('hidden-force');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            STORE.tempImage = null;
+            document.getElementById('input-image-file').value = ''; // Reset input
+            document.getElementById('image-preview-container').classList.add('hidden-force');
         }
 
         // --- SEARCH LOGIC ---
@@ -1509,22 +1729,42 @@
 
         // --- CORE LOGIC ---
 
-        function loadData() {
-            const mems = localStorage.getItem(STORAGE_KEY_MEMORIES);
+        async function loadData() {
+            // 1. Initialize DB
+            await DB.init();
+
+            // 2. Check Migration (LocalStorage -> IDB)
+            const legacyMems = localStorage.getItem(STORAGE_KEY_MEMORIES_LEGACY);
+            if (legacyMems) {
+                try {
+                    const parsed = JSON.parse(legacyMems);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        for (const m of parsed) {
+                            // Ensure structure
+                            const migrated = { 
+                                ...m, 
+                                type: m.type || 'text',
+                                isCompleted: !!m.isCompleted,
+                                isMission: !!m.isMission
+                            };
+                            await DB.put(migrated);
+                        }
+                    }
+                    // Clear legacy
+                    localStorage.removeItem(STORAGE_KEY_MEMORIES_LEGACY);
+                    console.log("Migration to IndexedDB Complete.");
+                } catch(e) {
+                    console.error("Migration Failed", e);
+                }
+            }
+
+            // 3. Load from IDB
+            let mems = await DB.getAll();
             const isoTime = new Date().toISOString();
 
-            if (mems && JSON.parse(mems).length > 0) {
-                 const parsed = JSON.parse(mems);
-                 // Migrate old data to have type property and isCompleted
-                 STORE.memories = parsed.map(m => ({ 
-                     ...m, 
-                     type: m.type || 'text',
-                     isCompleted: !!m.isCompleted,
-                     isMission: !!m.isMission
-                 }));
-            } else {
-                // FIRST RUN LOGIC - SEED DEFAULT DATA
-                STORE.memories = [
+            if (mems.length === 0) {
+                // FIRST RUN LOGIC - SEED DEFAULT DATA into IDB
+                const defaults = [
                     {
                         id: 'MEM-SYS-01',
                         title: '// SYSTEM_BOOT_SEQUENCE',
@@ -1562,10 +1802,16 @@
                         isMission: false
                     }
                 ];
-                // Persist immediately
-                localStorage.setItem(STORAGE_KEY_MEMORIES, JSON.stringify(STORE.memories));
+                
+                for(const d of defaults) {
+                    await DB.put(d);
+                }
+                mems = defaults;
             }
 
+            STORE.memories = mems;
+
+            // Load Folders (Keep in LocalStorage for simplicity as they are small config)
             const folds = localStorage.getItem(STORAGE_KEY_FOLDERS);
             if (folds) {
                 STORE.folders = JSON.parse(folds);
@@ -1573,6 +1819,8 @@
                 STORE.folders = [{ id: 'all', name: 'ALL' }];
                 saveFolders();
             }
+            
+            renderApp();
         }
         
         // --- DATE FORMATTING ---
@@ -1596,8 +1844,9 @@
             return `${month} ${day} ${year} | ${hours}:${minutes} ${ampm}`;
         }
 
-        function saveMemories() {
-            localStorage.setItem(STORAGE_KEY_MEMORIES, JSON.stringify(STORE.memories));
+        async function saveMemories() {
+            // Reload from DB to ensure UI is in sync
+            STORE.memories = await DB.getAll();
             renderMemoryList();
         }
 
@@ -1610,14 +1859,14 @@
             return `MEM-${Math.floor(Math.random() * 9000) + 1000}`;
         }
 
-        function deleteNote(id) {
+        async function deleteNote(id) {
             if(!id) return;
-            STORE.memories = STORE.memories.filter(m => m.id !== id);
-            saveMemories();
+            await DB.delete(id);
+            await saveMemories();
             closeModal();
         }
 
-        function saveNote() {
+        async function saveNote() {
             const title = document.getElementById('note-title').value;
             const folderId = document.getElementById('select-folder').value;
             const id = document.getElementById('note-id').value;
@@ -1630,13 +1879,16 @@
             } else {
                 content = document.getElementById('note-content').value;
             }
+            
+            // Prepare Note Object
+            let noteToSave = {};
 
             if (id) {
                 // Update
-                const index = STORE.memories.findIndex(m => m.id === id);
-                if (index !== -1) {
-                    STORE.memories[index] = { 
-                        ...STORE.memories[index], 
+                const existing = STORE.memories.find(m => m.id === id);
+                if (existing) {
+                    noteToSave = { 
+                        ...existing, 
                         title, 
                         content, 
                         folderId, 
@@ -1644,12 +1896,19 @@
                         isPinned: STORE.tempIsPinned,
                         isCompleted: STORE.tempIsCompleted,
                         isMission: STORE.tempIsMission,
-                        type: STORE.currentNoteType
+                        type: STORE.currentNoteType,
+                        // Update image if tempImage is set or null (removed)
+                        // If tempImage is null but was not explicitly removed (just undefined in UI flow), we need to check removal logic.
+                        // However, here tempImage tracks the current state in the modal.
+                        // If user opened modal, tempImage was set to existing image.
+                        // If user removed, tempImage is null.
+                        // If user added new, tempImage is new base64.
+                        image: STORE.tempImage
                     };
                 }
             } else {
                 // Create
-                const newMem = {
+                noteToSave = {
                     id: generateId(),
                     title: title || 'UNTITLED_DATA',
                     content: content || (STORE.currentNoteType === 'chat' ? '[]' : 'No content provided.'),
@@ -1659,12 +1918,13 @@
                     isPinned: STORE.tempIsPinned,
                     isCompleted: STORE.tempIsCompleted,
                     isMission: STORE.tempIsMission,
-                    type: STORE.currentNoteType
+                    type: STORE.currentNoteType,
+                    image: STORE.tempImage || null
                 };
-                STORE.memories.unshift(newMem);
             }
 
-            saveMemories();
+            await DB.put(noteToSave);
+            await saveMemories();
             closeModal();
         }
 
@@ -1765,6 +2025,7 @@
             STORE.tempIsPinned = memory ? !!memory.isPinned : false;
             STORE.tempIsCompleted = memory ? !!memory.isCompleted : false;
             STORE.tempIsMission = memory ? !!memory.isMission : false;
+            STORE.tempImage = memory ? (memory.image || null) : null;
             
             // Reset Maximize State on Open
             STORE.isMaximized = false;
@@ -1799,6 +2060,18 @@
                 document.getElementById('note-content').value = memory ? memory.content : '';
                 STORE.currentChatHistory = [];
             }
+            
+            // Setup Image Preview
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview-img');
+            
+            if (STORE.tempImage) {
+                previewImg.src = STORE.tempImage;
+                previewContainer.classList.remove('hidden-force');
+            } else {
+                previewImg.src = '';
+                previewContainer.classList.add('hidden-force');
+            }
 
             populateFolderSelect();
             const select = document.getElementById('select-folder');
@@ -1831,11 +2104,10 @@
             
             // INSTANT ACTION: Update store and save immediately if editing/viewing existing note
             if (STORE.editingMemoryId) {
-                const index = STORE.memories.findIndex(m => m.id === STORE.editingMemoryId);
-                if (index !== -1) {
-                    STORE.memories[index].isPinned = STORE.tempIsPinned;
-                    saveMemories(); // This re-renders list in background
-                    console.log('INSTANT PIN ACTION: Saved to Storage');
+                // We must use the async update for IDB
+                const existing = STORE.memories.find(m => m.id === STORE.editingMemoryId);
+                if (existing) {
+                    DB.put({ ...existing, isPinned: STORE.tempIsPinned }).then(() => saveMemories());
                 }
             }
         }
@@ -1848,11 +2120,9 @@
             
             // INSTANT ACTION
             if (STORE.editingMemoryId) {
-                const index = STORE.memories.findIndex(m => m.id === STORE.editingMemoryId);
-                if (index !== -1) {
-                    STORE.memories[index].isMission = STORE.tempIsMission;
-                    saveMemories(); 
-                    console.log('INSTANT MISSION ACTION: Saved to Storage');
+                const existing = STORE.memories.find(m => m.id === STORE.editingMemoryId);
+                if (existing) {
+                    DB.put({ ...existing, isMission: STORE.tempIsMission }).then(() => saveMemories());
                 }
             }
             
@@ -1877,14 +2147,12 @@
                  setReadMode(); // Refresh buttons
             }
 
-            // INSTANT ACTION: Update store and save immediately if editing/viewing existing note
+            // INSTANT ACTION
             if (STORE.editingMemoryId) {
-                 const index = STORE.memories.findIndex(m => m.id === STORE.editingMemoryId);
-                 if (index !== -1) {
-                     STORE.memories[index].isCompleted = STORE.tempIsCompleted;
-                     saveMemories(); 
-                     console.log('INSTANT COMPLETE ACTION: Saved to Storage');
-                 }
+                const existing = STORE.memories.find(m => m.id === STORE.editingMemoryId);
+                if (existing) {
+                    DB.put({ ...existing, isCompleted: STORE.tempIsCompleted }).then(() => saveMemories());
+                }
             }
         }
         
@@ -1988,6 +2256,21 @@
             } else {
                  textVoiceBtn.classList.add('hidden-force');
             }
+            
+            // Show Image Button
+             const imgBtn = document.getElementById('btn-add-image');
+            if (STORE.currentNoteType === 'text') {
+                 imgBtn.classList.remove('hidden-force');
+            } else {
+                 imgBtn.classList.add('hidden-force');
+            }
+            
+            // Show remove image button if image exists
+             if (STORE.tempImage) {
+                 document.getElementById('btn-remove-image').classList.remove('hidden-force');
+             } else {
+                 document.getElementById('btn-remove-image').classList.add('hidden-force');
+             }
 
             const titleInput = document.getElementById('note-title');
             titleInput.readOnly = false;
@@ -2041,6 +2324,10 @@
             document.getElementById('chat-input-area').classList.add('hidden-force');
             // Hide text voice button
             document.getElementById('btn-voice-text').classList.add('hidden-force');
+            // Hide Image Add Button
+            document.getElementById('btn-add-image').classList.add('hidden-force');
+            // Hide Remove Image Button
+            document.getElementById('btn-remove-image').classList.add('hidden-force');
 
             const titleInput = document.getElementById('note-title');
             titleInput.readOnly = true;
@@ -2120,7 +2407,13 @@
                                 <h1 class="font-tech text-xl font-bold tracking-widest text-t-text">NEXUS</h1>
                                 <span class="text-[0.6rem] font-bold tracking-[0.2em] text-cyber-blue">ARCHIVE // v1.0</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-3">
+                                <!-- SYSTEM CLOCK -->
+                                <div id="system-clock" class="hidden sm:block">00:00:00</div>
+                                <div id="system-clock-mobile" class="sm:hidden text-cyber-blue font-mono text-xs tracking-wider font-bold">00:00:00</div>
+                                
+                                <div class="h-6 w-[1px] bg-cyber-blue/20"></div>
+
                                 <!-- SEARCH BUTTON -->
                                  <button id="btn-toggle-search" class="btn-pill btn-action-search" title="Search">
                                     <i class="fas fa-search"></i>
@@ -2138,8 +2431,6 @@
                 `;
             }
         }
-
-        /* Removed Clock Function as per new UI Requirements */
 
         function renderTabs() {
             const container = document.getElementById('tabs-container');
@@ -2262,6 +2553,14 @@
                         opacityClass = 'mission-completed';
                         titleClass = 'text-t-muted line-through-cyber';
                     }
+                    
+                    // Image Rendering for Card
+                    const imageHtml = m.image ? `
+                        <div class="w-full h-32 overflow-hidden mb-3 rounded-sm border-b border-cyber-blue/20 relative">
+                            <img src="${m.image}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        </div>
+                    ` : '';
 
                     return `
                     <div class="note-card group relative overflow-hidden rounded-sm border glass-panel p-5 cursor-pointer transition-all duration-300 ease-out hover:translate-x-1 active:scale-[0.98] ${borderClass} ${hoverClass} ${opacityClass}" data-id="${m.id}">
@@ -2277,6 +2576,9 @@
                         ${isMission && isCompleted ? '<div class="absolute top-[35px] right-[10px] z-10 text-cyber-green text-lg animate-fade-in"><i class="fas fa-check-circle"></i></div>' : ''}
 
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-cyber-blue transition-all duration-300"></div>
+                        
+                        <!-- Image -->
+                        ${imageHtml}
                         
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex flex-col pr-8 w-full">
